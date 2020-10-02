@@ -1,15 +1,34 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 export default function Flashcard({ flashcard }) {
     const [flip, setFlip] = useState(false)
+    const [height, setHeight] = useState('initial')
 
+    // Logic to dynamically set max height for cards
+    const frontEl = useRef()
+    const backEl = useRef()
+
+    function setMaxHeight(){
+        const frontHeight = frontEl.current.getBoundingClientRect().height
+        const backHeight = backEl.current.getBoundingClientRect().height
+        setHeight(Math.max(frontHeight, backHeight, 100))
+    }
+
+    // Hook to setMaxHeight on refresh
+    useEffect(setMaxHeight, [flashcard.question, flashcard.answer, flashcard.options])
+    // Hook to setMaxHeight on window resize to keep consistent sizing
+    useEffect(() => {
+        window.addEventListener('resize', setMaxHeight)
+        return () => window.removeEventListener('resize', setMaxHeight)
+    })
 
     return (
         <div
             className={`card ${flip ? 'flip' : ''}`}
+            style={{height: height}}
             onClick={() => setFlip(!flip)}
         >
-            <div className="front">
+            <div className="front" ref={frontEl}>
                 {flashcard.question}
                 <div className="flashcard-options">
                     {flashcard.options.map(option => {
@@ -17,7 +36,7 @@ export default function Flashcard({ flashcard }) {
                     })}
                 </div>
             </div>
-            <div className="back">
+            <div className="back" ref={backEl}>
                 {flashcard.answer}
             </div>
         </div>
